@@ -16,6 +16,50 @@ contracts/sorobanlard/
 └── Cargo.toml
 ```
 
+## Contract workspace layout
+
+Use this map to find where each kind of change belongs:
+
+| Path | What lives here |
+| --- | --- |
+| `contracts/sorobanlard/src/lib.rs` | All contract logic: types, storage keys, and the `impl` block with public functions. |
+| `contracts/sorobanlard/src/test.rs` | The main test suite (unit and integration-style tests). |
+| `contracts/sorobanlard/src/test/proptests.rs` | Property-based tests. |
+| `scripts/` | Tooling such as `check_readme_api.py` (README/API signature check) and `check_invariants.sh` (invariant checks). |
+| `fuzz/` | Fuzz targets. |
+| `DEPLOYMENTS.md` | Deployment configuration and records. |
+| `contracts/sorobanlard/.env.example` | Example environment variables for deployment. |
+| `contracts/sorobanlard/Makefile` | Build / optimize / deployment targets. |
+
+### Change-to-file map
+
+| Contribution | Where to make the change |
+| --- | --- |
+| New contract function | `contracts/sorobanlard/src/lib.rs` (inside the `impl` block, near related feature code), plus a doc comment and a `README.md` update. |
+| New test | `contracts/sorobanlard/src/test.rs` (or `src/test/proptests.rs` for property-based tests). |
+| New fuzz target | `fuzz/` (add the target and register it in the fuzz manifest). |
+| New panic message | The panic site in `contracts/sorobanlard/src/lib.rs`, plus a row in `ERRORS.md`. |
+| Deployment change | `DEPLOYMENTS.md`, `contracts/sorobanlard/.env.example`, and `contracts/sorobanlard/Makefile` as applicable. |
+
+### Verifying your change
+
+Run the checks relevant to what you touched, and report the exact command and
+result in the pull request description:
+
+```sh
+# Contract logic or tests
+cargo test
+
+# README/API signature consistency
+python3 scripts/check_readme_api.py
+
+# Invariant checks
+bash scripts/check_invariants.sh
+
+# Fuzz targets (from the fuzz workspace)
+cargo fuzz build
+```
+
 ### How `lib.rs` is organized
 
 `lib.rs` is intentionally kept as one file, but it follows a fixed top-to-bottom

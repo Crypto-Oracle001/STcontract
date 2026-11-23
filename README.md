@@ -408,15 +408,34 @@ sorobanlard-contract/
 
 ## Prerequisites
 
+The local development environment is pinned to the toolchain below. Anything
+newer usually works, but these are the versions the test suite and build are
+validated against.
+
+| Tool | Supported version | Install / verify |
+|---|---|---|
+| Rust | stable, 1.84.0 or newer (edition 2021) | `rustup show` |
+| `wasm32v1-none` target | required for `make build` | `rustup target add wasm32v1-none` |
+| Stellar CLI | 22.x (`stellar-cli` with the `opt` feature) | `cargo install --locked stellar-cli --features opt` |
+
 ```bash
-# Rust + wasm32 target
+# Rust toolchain + wasm target
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup show                                   # confirm the active stable toolchain
 rustup target add wasm32v1-none
+rustup target list --installed | grep wasm32v1-none
 
 # Stellar CLI
 cargo install --locked stellar-cli --features opt
+stellar --version                             # e.g. stellar 22.x.x
+```
 
-# Testnet account
+Testnet credentials are **optional**. Everything in [Setup & Installation](#setup--installation)
+and [Running Tests](#running-tests) works offline against the Soroban test host;
+only [Deploying to Testnet](#deploying-to-testnet) needs a funded account:
+
+```bash
+# Optional — only for testnet deployment / smoke testing
 stellar keys generate --global my-account --network testnet
 stellar keys fund my-account --network testnet
 ```
@@ -425,11 +444,22 @@ stellar keys fund my-account --network testnet
 
 ## Setup & Installation
 
+From a fresh clone to a passing local test run:
+
 ```bash
 git clone https://github.com/your-org/sorobanlard-contract.git
 cd sorobanlard-contract
-cargo check
+cargo check                                   # workspace compiles
+cargo test                                    # contract + invariant tests pass
+cd contracts/sorobanlard
+make build                                    # → target/wasm32v1-none/release/sorobanlard.wasm
 ```
+
+No network access, funded account, or `.env` file is required for the commands
+above. If `make build` fails with `can't find crate for 'core'` or a missing
+target error, re-run `rustup target add wasm32v1-none`.
+
+### Optional: testnet configuration
 
 Deployment variables that the Makefile reads (such as `STELLAR_ACCOUNT`) are listed in [`contracts/sorobanlard/.env.example`](contracts/sorobanlard/.env.example). Copy it to `.env` in that directory and export it before running `make deploy-testnet`:
 
@@ -438,6 +468,10 @@ cd contracts/sorobanlard
 cp .env.example .env
 set -a; source .env; set +a
 ```
+
+After deploying and calling `init`, [`scripts/smoke-test-testnet.sh`](scripts/smoke-test-testnet.sh)
+verifies the deployment end to end (see [Smoke test after deployment](#smoke-test-after-deployment)).
+Both steps are optional for local development.
 
 ---
 
